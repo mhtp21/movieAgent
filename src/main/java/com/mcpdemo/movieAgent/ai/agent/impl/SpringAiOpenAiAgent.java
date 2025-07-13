@@ -1,14 +1,13 @@
 package com.mcpdemo.movieAgent.ai.agent.impl;
 
-import com.mcpdemo.movieAgent.ai.agent.MovieSuggestionAgent;
+import com.mcpdemo.movieAgent.ai.agent.AiAgent;
+import com.mcpdemo.movieAgent.ai.prompt.PromptEngine;
 import com.mcpdemo.movieAgent.mcp.protocol.dto.McpRequestContext;
 import com.mcpdemo.movieAgent.mcp.protocol.dto.McpResponseModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.ChatClient;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.parser.BeanOutputParser;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -19,24 +18,21 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SpringAiOpenAiAgent implements MovieSuggestionAgent {
+public class SpringAiOpenAiAgent implements AiAgent {
+    @Override
+    public String getName() {
+        return "openai";
+    }
+
+    @Override
+    public boolean supports(McpRequestContext context) {
+        return context != null && "openai".equalsIgnoreCase(context.provider());
+    }
+
 
     private final ChatClient chatClient;
 
-    private final PromptTemplate systemPromptTemplate = new PromptTemplate("""
-            You are a world-class movie expert. Based on the user's theme provided in the "{prompt}" variable,
-            generate a list of all relevant movie suggestions.
-    
-            For each movie, provide:
-            - the title
-            - a 2-3 sentence plot summary
-            - a list of its main genres
-    
-            Your response MUST strictly follow the JSON format instructions provided by the system.
-            The JSON format instructions are:
-            
-            {format}
-            """);
+    private final PromptEngine promptEngine;
 
 
     @Override
@@ -49,7 +45,7 @@ public class SpringAiOpenAiAgent implements MovieSuggestionAgent {
                 "format", outputParser.getFormat()
         );
 
-        Prompt prompt = systemPromptTemplate.create(promptParameters);
+        Prompt prompt = promptEngine.loadPrompt("movie-suggestion", promptParameters);
 
         return Mono.fromCallable(() -> {
                     log.info("Executing blocking AI call on a separate thread...");

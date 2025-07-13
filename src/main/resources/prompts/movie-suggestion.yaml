@@ -1,0 +1,17 @@
+# movie-suggestion.yaml
+
+name: "movie-suggestion"
+
+description: |
+  You are a world-class movie expert. Based on the user's theme provided in the "{prompt}" variable,
+  generate a list of all relevant movie suggestions.
+
+template: |
+  For each movie, provide:
+    - the title
+    - a 2-3 sentence plot summary
+    - a list of its main genres
+
+instructions: |
+  Your response MUST strictly follow the JSON format instructions provided by the system:
+  "{format}"
